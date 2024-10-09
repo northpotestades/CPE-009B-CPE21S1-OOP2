@@ -5,95 +5,72 @@ from Magician import Magician
 from Boss import Boss
 import random
 
-def bossattack():
-    attack=random.randint(1,4)
-    if attack==1:
-        Enemy.basicAttack(Player)
-    elif attack==2:
-        Enemy.slashAttack(Player)
-    elif attack==3:
-        Enemy.rangedAttack(Player)
-    elif attack==4:
-        Enemy.magicAttack(Player)
-    else:
-        print("The enemy is standing menacingly!")
+def select_role():
+    roles = {"1": Swordsman, "2": Archer, "3": Magician}
+    print("Select your role: 1 - Swordsman, 2 - Archer, 3 - Magician") 
+    choice = input("Enter the number of your role: ")
+    return roles.get(choice, Novice)
+
+def battle(player, opponent):
+    while player.getHp() > 0 and opponent.getHp() > 0:
+        for current, target in [(player, opponent), (opponent, player)]:
+            if current == player:
+                action = input(f"{current.getUsername()}'s Turn! Choose action (1 - Basic Attack, 2 - Special Attack): ")
+                if action == '1':
+                    current.basicAttack(target)
+                elif action == '2':
+                    if isinstance(current, Swordsman):
+                        current.slashAttack(target)
+                    elif isinstance(current, Archer):
+                        current.rangedAttack(target)
+                    elif isinstance(current, Magician):
+                        current.magicAttack(target)
+                else:
+                    print("Invalid action. Turn skipped.")
+            else:
+                action = random.choice(['basic', 'slash', 'magic'])
+                getattr(current, f"{action}Attack")(target)
+
+def player_vs_computer():
+    player_wins = 0 
+    while True:
+        print("\n--- Single Player Mode ---")
+        player = Novice(input("Enter username: "))
+        monster = Boss("Monster")
+        battle(player, monster)
         
-def swordattack(chc):
-    if chc==0:
-        pass
-
-def archerattack(chc):
-    pass
-
-def magicattack(chc):
-    pass
-
-while True:
-    print("Welcome! For singleplayer please input 0, for pvp please input 1,")
-    print("and to exit, please input anything else.")
-    choice=int(input("Input: "))
-    if choice==0:
-        print("Welcome to singleplayer!")
-        user=input(str("Please enter your username: "))
-        Player=Novice(user)
-        Enemy=Boss("Monster")
-        wins=0
-        while wins<2:
-            while Player.getHp()>0 and Enemy.getHp()>0:
-                print(f"{Player.getUsername()} HP: {Player.getHp()}")
-                print(f"{Enemy.getUsername()} HP: {Enemy.getHp()}")
-                Player.basicAttack(Enemy)
-                bossattack()
-                if Enemy.getHp()<=0:
-                    wins+=1
-                    print(f"You win! Wins: {Player.wins}")
-                    Player.setHp(100)
-                elif Player.getHp()<=0:
-                    print(f"You lose! Wins: {Player.wins}")
-                    print("Try again? 0 - Yes | 1 - No")
-                    
-            
+        if monster.getHp() <= 0:
+            player_wins += 1
+            print(f"{monster.getUsername()} has been defeated! Your wins: {player_wins}")
+            if player_wins >= 2:
+                player = select_role()(player.getUsername())
         
-    elif choice==1:
-        print("Welcome to PVP!")
-        print("Player 1:")
-        u1=input(str("Please enter your username: "))
-        print("Please enter which class you want to choose!")
-        c1=input(int("0 - Swordsman | 1 - Archer | 2 - Magician"))
-        if c1==0:
-            Player1=Swordsman(u1)
-        elif c1==1:
-            Player1=Archer(u1)
-        elif c1==2:
-            Player1=Magician(u1)
-        print("Player 2:")
-        u2=input(str("Please enter your username: "))
-        print("Please enter which class you want to choose!")
-        c2=input(int("0 - Swordsman | 1 - Archer | 2 - Magician"))
-        if c2==0:
-            Player2=Swordsman(u2)
-        elif c2==1:
-            Player2=Archer(u2)
-        elif c2==2:
-            Player2=Magician(u2)
-        if c1==0 and c2==0:
-            pass
-        elif c1==1 and c2==1:
-            pass
-        elif c1==2 and c2==2:
-            pass
-        elif c1==0 and c2==1:
-            pass
-        elif c1==0 and c2==2:
-            pass
-        elif c1==1 and c2==0:
-            pass
-        elif c1==1 and c2==2:
-            pass
-        elif c1==2 and c2==0:
-            pass
-        elif c1==2 and c2==1:
-            pass
+        if input("You have been defeated! Play again? (y/n): ").lower() != 'y':
+            break
+
+def player_vs_player():
+    wins = {"Player 1": 0, "Player 2": 0}
+    while True:
+        print("\n--- Player vs Player Mode ---")
+        player1 = select_role()(input("Enter Player 1 username: "))
+        player2 = select_role()(input("Enter Player 2 username: "))
+        battle(player1, player2)
+
+        if player2.getHp() <= 0:
+            wins["Player 1"] += 1
+            print(f"{player2.getUsername()} has been defeated! Current Wins: Player 1: {wins['Player 1']}, Player 2: {wins['Player 2']}")
+        else:
+            wins["Player 2"] += 1
+            print(f"{player1.getUsername()} has been defeated! Current Wins: Player 1: {wins['Player 1']}, Player 2: {wins['Player 2']}")
+
+        if input("Play again? (y/n): ").lower() != 'y':
+            break
+
+if __name__ == "__main__":
+    mode = input("Select mode (1: Single Player, 2: Player vs Player): ")
+    if mode == '1':
+        player_vs_computer()
+    elif mode == '2':
+        player_vs_player()
     else:
-        print("Game is exiting, thank you for playing!")
-        break
+        print("Invalid mode selected.")
